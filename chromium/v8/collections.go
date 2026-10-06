@@ -3,6 +3,7 @@ package v8
 import (
 	"sort"
 	"strconv"
+	"unsafe"
 )
 
 // readKey reads a property key: a string, or a number converted as JS would.
@@ -184,12 +185,73 @@ func newArray(length uint32) []any {
 	return make([]any, length)
 }
 
-// finishArray returns arr, or an *ArrayWithProps when it carries named properties.
-func finishArray(arr []any, props *Object) any {
+// finishArray returns arr, or an *ArrayWithProps when it carries named
+// properties. In the second case the reference table entry is replaced with the
+// wrapper, and references to arr taken while it was being read (cycles) are
+// rewritten to the wrapper, so every reference sees the same final value.
+func (d *decoder) finishArray(id int, arr []any, props *Object) any {
 	if props == nil {
 		return arr
 	}
-	return &ArrayWithProps{Items: arr, Props: props}
+	w := &ArrayWithProps{Items: arr, Props: props}
+	d.refs[id] = w
+	replaceArrayRefs(w, arr, w, map[any]bool{})
+	return w
+}
+
+// replaceArrayRefs rewrites every element reachable from v that is the slice
+// arr (same backing storage and length) to w, visiting each container once.
+func replaceArrayRefs(v any, arr []any, w *ArrayWithProps, seen map[any]bool) {
+	same := func(x any) bool {
+		s, ok := x.([]any)
+		return ok && len(s) == len(arr) && unsafe.SliceData(s) == unsafe.SliceData(arr)
+	}
+	fix := func(items []any) {
+		for i, x := range items {
+			if same(x) {
+				items[i] = w
+				continue
+			}
+			replaceArrayRefs(x, arr, w, seen)
+		}
+	}
+	switch t := v.(type) {
+	case *ArrayWithProps:
+		if seen[t] {
+			return
+		}
+		seen[t] = true
+		fix(t.Items)
+		if t.Props != nil {
+			replaceArrayRefs(t.Props, arr, w, seen)
+		}
+	case []any:
+		if seen[unsafe.SliceData(t)] {
+			return
+		}
+		seen[unsafe.SliceData(t)] = true
+		fix(t)
+	case *Object:
+		if seen[t] {
+			return
+		}
+		seen[t] = true
+		fix(t.Values)
+	case *Map:
+		if seen[t] {
+			return
+		}
+		seen[t] = true
+		for i := range t.Entries {
+			fix(t.Entries[i][:])
+		}
+	case *Set:
+		if seen[t] {
+			return
+		}
+		seen[t] = true
+		fix(t.Items)
+	}
 }
 
 func (d *decoder) readSparseArray() (any, error) {
@@ -204,7 +266,8 @@ func (d *decoder) readSparseArray() (any, error) {
 	for i := range arr {
 		arr[i] = Hole{}
 	}
-	d.register(arr, false)
+	id := d.newID()
+	d.setID(id, arr, false)
 	props, n, err := d.arrayProperties(arr, tagEndSparse)
 	if err != nil {
 		return nil, err
@@ -215,7 +278,7 @@ func (d *decoder) readSparseArray() (any, error) {
 	if err := d.expectCount("array length", uint64(length)); err != nil {
 		return nil, err
 	}
-	return finishArray(arr, props), nil
+	return d.finishArray(id, arr, props), nil
 }
 
 func (d *decoder) readDenseArray() (any, error) {
@@ -228,7 +291,8 @@ func (d *decoder) readDenseArray() (any, error) {
 		return nil, d.errorf("dense array length %d exceeds remaining data", length)
 	}
 	arr := newArray(length)
-	d.register(arr, false)
+	id := d.newID()
+	d.setID(id, arr, false)
 	for i := range arr {
 		if t, ok := d.peekTag(); ok && t == tagTheHole {
 			d.pos++
@@ -251,7 +315,7 @@ func (d *decoder) readDenseArray() (any, error) {
 	if err := d.expectCount("array length", uint64(length)); err != nil {
 		return nil, err
 	}
-	return finishArray(arr, props), nil
+	return d.finishArray(id, arr, props), nil
 }
 
 func (d *decoder) readMap() (any, error) {

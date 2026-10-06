@@ -395,9 +395,8 @@ func TestDecodedTypes(t *testing.T) {
 		}},
 		{"array_empty_cycle_through_property", func(t *testing.T, v any) {
 			a := v.(*ArrayWithProps)
-			inner, ok := a.Props.Values[0].([]any)
-			mustEq(t, ok, true)
-			mustEq(t, len(inner), 0)
+			// The property points back at the array, which is the final wrapper.
+			mustEq(t, a.Props.Values[0], any(a))
 		}},
 		{"date_invalid_nan", func(t *testing.T, v any) { _ = v.(InvalidDate) }},
 		{"date_max_js_date", func(t *testing.T, v any) { mustEq(t, v.(time.Time).UnixMilli(), int64(8.64e15)) }},
@@ -555,4 +554,43 @@ func nodeGate(ci bool, lookErr error, major string) (skip, fail string) {
 		return "", problem + " (Node 22 is required because CRAWLKIT_REQUIRE_NODE is set)"
 	}
 	return problem, ""
+}
+
+// TestArrayWithPropsBackReferences checks that a back-reference to an array that
+// carries named properties resolves to the final *ArrayWithProps, not the plain slice.
+func TestArrayWithPropsBackReferences(t *testing.T) {
+	prop := []byte{'"', 1, 'x', 'I', 2} // x = 1
+	// a = []; a.x = 1; [a, a]
+	inner := append(append([]byte{'A', 0}, prop...), '$', 1, 0)
+	outer := append([]byte{0xff, 0x0f, 'A', 2}, inner...)
+	outer = append(outer, '^', 1, '$', 0, 2)
+	v, err := Deserialize(outer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pair := v.([]any)
+	first, ok := pair[0].(*ArrayWithProps)
+	if !ok {
+		t.Fatalf("first element is %T, want *ArrayWithProps", pair[0])
+	}
+	if pair[1] != any(first) {
+		t.Fatalf("back-reference is %T, want the same *ArrayWithProps", pair[1])
+	}
+	// a = [a]; a.x = 1 (dense, then sparse), the element is a reference to the array itself.
+	for name, in := range map[string][]byte{
+		"dense":  append(append([]byte{0xff, 0x0f, 'A', 1, '^', 0}, prop...), '$', 1, 1),
+		"sparse": append(append([]byte{0xff, 0x0f, 'a', 1, 'I', 0, '^', 0}, prop...), '@', 2, 1),
+	} {
+		v, err := Deserialize(in)
+		if err != nil {
+			t.Fatalf("%s: %v", name, err)
+		}
+		a, ok := v.(*ArrayWithProps)
+		if !ok {
+			t.Fatalf("%s: got %T", name, v)
+		}
+		if a.Items[0] != any(a) {
+			t.Fatalf("%s: self reference is %T, want the same *ArrayWithProps", name, a.Items[0])
+		}
+	}
 }

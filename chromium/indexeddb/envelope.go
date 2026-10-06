@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
+	"fmt"
 
 	"github.com/golang/snappy"
 	"github.com/openclaw/crawlkit/chromium/v8"
@@ -19,7 +20,12 @@ const (
 	trailerMinVersion  = 21
 	maxEnvelopeDepth   = 4
 	envelopeHexBytes   = 16
-	v21PayloadOffset   = 15 // ff 15 fe + 8-byte offset + 4-byte size; cross-checks the trailer
+	// maxSnappyRatio bounds a Snappy block's declared decoded length by its
+	// compressed length. The densest Snappy encoding is a 3-byte copy of 64
+	// bytes (about 21:1), so no valid block exceeds 32:1; a larger claim is a
+	// forged length header, which snappy.Decode would otherwise allocate in full.
+	maxSnappyRatio   = 32
+	v21PayloadOffset = 15 // ff 15 fe + 8-byte offset + 4-byte size; cross-checks the trailer
 )
 
 // Omission codes: the complete list callers can see. v8_unknown_tag,
@@ -31,6 +37,7 @@ const (
 	CodeBadKey          = "bad_key"
 	CodeV8Version       = "v8_version"
 	CodeV8Malformed     = "v8_malformed"
+	CodeSnappyTooLarge  = "snappy_too_large"
 )
 
 // Omission describes a value that could not be decoded.
@@ -156,6 +163,13 @@ func (o *Origin) unwrap(dbID int64, raw []byte, depth int) ([]byte, error) {
 			}
 			return o.unwrap(dbID, b, depth+1)
 		case wrapSnappy:
+			n, err := snappy.DecodedLen(rest[1:])
+			if err != nil {
+				return nil, unknown(raw, "snappy: "+err.Error())
+			}
+			if uint64(n) > maxSnappyRatio*uint64(len(rest)-1) {
+				return nil, &OmissionError{Omission{Code: CodeSnappyTooLarge, Detail: fmt.Sprintf("snappy block declares %d decoded bytes for %d compressed; envelope %s", n, len(rest)-1, hex.EncodeToString(raw[:min(len(raw), envelopeHexBytes)]))}}
+			}
 			dec, err := snappy.Decode(nil, rest[1:])
 			if err != nil {
 				return nil, unknown(raw, "snappy: "+err.Error())

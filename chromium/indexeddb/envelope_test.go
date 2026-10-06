@@ -56,6 +56,22 @@ func TestEnvelopeSnappy(t *testing.T) {
 	}
 }
 
+func TestEnvelopeSnappyForgedLength(t *testing.T) {
+	o := newTestOrigin(fakeKV{}, "")
+	// Declares a decoded length of 4,294,967,295 in a 5-byte block.
+	forged := []byte{0xff, 0x11, 0x02, 0xff, 0xff, 0xff, 0xff, 0x0f}
+	_, err := o.Decode(1, forged)
+	if omissionCode(t, err) != CodeSnappyTooLarge {
+		t.Fatalf("forged length: %v", err)
+	}
+	// Real encoder output for the most compressible input stays within the bound.
+	big := bytes.Repeat([]byte{'a'}, 1<<20)
+	enc := snappy.Encode(nil, big)
+	if len(big) > maxSnappyRatio*len(enc) {
+		t.Fatalf("ratio %d exceeds bound for real encoder output", len(big)/len(enc))
+	}
+}
+
 func v21Envelope(payload, trailerBody []byte) []byte {
 	out := []byte{0xff, 0x15, 0xfe}
 	off := uint64(15 + len(payload))

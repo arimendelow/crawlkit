@@ -10,6 +10,7 @@
 //	blob_missing      the external blob file or its blob entry is absent
 //	bad_key           the record key could not be decoded (Record.Err; detail has the key in hex)
 //	v8_unknown_tag, v8_host_object, v8_shared   passed through from chromium/v8
+//	snappy_too_large  a Snappy envelope declares a decoded length more than 32 times its compressed size
 //	v8_version        the V8 wire format version is unsupported
 //	v8_malformed      any other V8 decoding error
 //
