@@ -1,0 +1,1 @@
+{"$error":{"name":"TypeError","message":"bad type","stack":"TypeError: bad type\n    at fixture (app.js:1:1)"}}

@@ -1,0 +1,1 @@
+{"$error":{"name":"Error","message":"self cause","stack":"Error: self cause\n    at fixture (app.js:1:1)","cause":{"$cycle":0}}}

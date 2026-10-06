@@ -1,0 +1,3 @@
+ÿrTm"outers",TypeError: outer
+    at fixture (app.js:1:1)crRm"inners"-RangeError: inner
+    at fixture (app.js:1:1)..

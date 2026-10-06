@@ -1,0 +1,1 @@
+{"$error":{"name":"SyntaxError","message":"syntax","stack":"SyntaxError: syntax\n    at fixture (app.js:1:1)"}}

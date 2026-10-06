@@ -1,0 +1,1 @@
+{"$error":{"name":"Error","message":"boom","stack":"Error: boom\n    at fixture (app.js:1:1)"}}

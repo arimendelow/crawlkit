@@ -16,6 +16,7 @@ rules, and CLI contracts. Reuse must preserve those contracts.
 | `embed`, `vector` | Embedding-provider clients, probe diagnostics, vector encoding, exact/optional search, and reciprocal-rank fusion |
 | `control`, `output`, `progress` | Metadata/contact DTOs, output formats, and terminal/CI progress logs |
 | `cache` | Local file and SQLite bundle captures; callers own source consistency and cache parsing |
+| `chromium/leveldb`, `chromium/indexeddb`, `chromium/v8` | Read-only decoding of a copied Chromium profile: LevelDB, IndexedDB keys, Blink envelopes and blobs, and V8 structured-clone values; callers own database selection, record meaning, and privacy |
 | `tui` | Pane layout, grouping, sorting, filtering, menus, detail rendering, refresh, and terminal lifecycle |
 | `scheduler`, `cmd/crawlctl` | App discovery, periodic command execution, held run locks, history, and native scheduling |
 | `worker` | Bounded continuous processing over application-owned durable queue adapters |

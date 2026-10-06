@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add pure-Go Chromium cache readers: `chromium/leveldb` (MANIFEST-driven live files, truncated-tail tolerance, key filtering), `chromium/indexeddb` (databases, stores, Blink envelopes, blobs) and `chromium/v8` (structured-clone deserializer and canonical JSON), ported from ourostack/teamscrawl. Slack, Discord and Teams desktop crawlers can read app state without Node or filename heuristics. Adds direct dependencies on `github.com/syndtr/goleveldb` (table, journal, and option primitives) and `github.com/golang/snappy` (block and Blink envelope decompression).
 - Use one shared autoreview installation from `openclaw/agent-skills`; repository entrypoints now receive upstream fixes without copied helpers or test suites.
 
 ## 0.16.8 - 2026-10-03

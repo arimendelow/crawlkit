@@ -1,0 +1,1 @@
+{"$error":{"name":"TypeError","message":"outer","stack":"TypeError: outer\n    at fixture (app.js:1:1)","cause":{"$error":{"name":"RangeError","message":"inner","stack":"RangeError: inner\n    at fixture (app.js:1:1)"}}}}

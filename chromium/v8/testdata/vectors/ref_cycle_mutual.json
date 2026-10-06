@@ -1,0 +1,1 @@
+{"root":{"name":"a","b":{"name":"b","a":{"$cycle":1}}},"other":{"name":"b","a":{"name":"a","b":{"$cycle":1}}}}

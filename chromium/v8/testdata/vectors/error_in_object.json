@@ -1,0 +1,1 @@
+{"e":{"$error":{"name":"Error","message":"inner","stack":"Error: inner\n    at fixture (app.js:1:1)"}},"again":{"$error":{"name":"Error","message":"inner","stack":"Error: inner\n    at fixture (app.js:1:1)"}}}

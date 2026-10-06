@@ -11,8 +11,10 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/ansi v0.11.8
 	github.com/charmbracelet/x/term v0.2.2
+	github.com/golang/snappy v1.0.0
 	github.com/mattn/go-isatty v0.0.24
 	github.com/pelletier/go-toml/v2 v2.4.3
+	github.com/syndtr/goleveldb v1.0.0
 	golang.org/x/sys v0.48.0
 	modernc.org/sqlite v1.60.1
 )

@@ -1,0 +1,1 @@
+{"$array":[1,{"$hole":true},3],"$props":{"first":{"n":1},"second":[2],"-1":"negative","4294967295":"not an index"}}

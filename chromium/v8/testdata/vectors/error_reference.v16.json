@@ -1,0 +1,1 @@
+{"$error":{"name":"ReferenceError","message":"ref","stack":"ReferenceError: ref\n    at fixture (app.js:1:1)"}}

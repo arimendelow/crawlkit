@@ -1,0 +1,1 @@
+{"$map":[["a",1],[2,"b"],[null,{"$undefined":true}],[true,false],[1.5,{"$number":"-0"}]]}

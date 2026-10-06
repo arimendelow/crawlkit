@@ -17,7 +17,7 @@ feature belongs in `crawlkit` or a downstream crawl app.
 ## Development Rules
 
 - Keep public package nouns stable and small: `config`, `store`, `snapshot`,
-  `mirror`, `state`, `output`, `progress`, `tui`, `cache`, and `control`.
+  `mirror`, `state`, `output`, `progress`, `tui`, `cache`, `control`, and `chromium/*`.
 - Prefer additive APIs. If an API must change, preserve downstream
   compatibility or update all crawl app branches in the same work cycle.
 - Do not add app-specific database schema, auth, API, or cache parsing logic to
