@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Use one shared autoreview installation from `openclaw/agent-skills`; repository entrypoints now receive upstream fixes without copied helpers or test suites.
+
 ## 0.16.8 - 2026-10-03
 
 **Highlights:** More resilient SQLite WAL handling and faster large statement binding.
