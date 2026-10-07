@@ -245,6 +245,16 @@ func replaceArrayRefs(v any, arr []any, w *ArrayWithProps, seen map[any]bool) {
 		for i := range t.Entries {
 			fix(t.Entries[i][:])
 		}
+	case *Error:
+		if seen[t] {
+			return
+		}
+		seen[t] = true
+		if same(t.Cause) {
+			t.Cause = w
+		} else {
+			replaceArrayRefs(t.Cause, arr, w, seen)
+		}
 	case *Set:
 		if seen[t] {
 			return

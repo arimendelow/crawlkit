@@ -594,3 +594,27 @@ func TestArrayWithPropsBackReferences(t *testing.T) {
 		}
 	}
 }
+
+// TestArrayWithPropsReachedThroughErrorCause covers a = []; e = new Error(”, {cause: a});
+// a.x = e; serialize([a, e]): the error's cause must be the final wrapper.
+func TestArrayWithPropsReachedThroughErrorCause(t *testing.T) {
+	in := []byte{0xff, 0x0f, 'A', 2,
+		'A', 0, '"', 1, 'x', 'r', 'c', '^', 1, '.', '$', 1, 0,
+		'^', 2, '$', 0, 2}
+	v, err := Deserialize(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pair := v.([]any)
+	a, ok := pair[0].(*ArrayWithProps)
+	if !ok {
+		t.Fatalf("pair[0] is %T, want *ArrayWithProps", pair[0])
+	}
+	e := pair[1].(*Error)
+	if a.Props.Values[0] != any(e) {
+		t.Fatal("property is not the shared error")
+	}
+	if e.Cause != any(a) {
+		t.Fatalf("cause is %T, want the same *ArrayWithProps", e.Cause)
+	}
+}
